@@ -9,7 +9,6 @@ class ScannerPage extends StatefulWidget {
 }
 
 class _ScannerPageState extends State<ScannerPage> {
-  // Flag para evitar que leia o mesmo código 10x no mesmo segundo e feche a tela múltiplas vezes
   bool _isScanned = false;
 
   @override
@@ -21,7 +20,6 @@ class _ScannerPageState extends State<ScannerPage> {
         foregroundColor: Colors.white,
       ),
       body: MobileScanner(
-        // Callback acionado quando a câmera encontra qualquer código
         onDetect: (BarcodeCapture capture) {
           if (_isScanned) return;
 
@@ -30,10 +28,8 @@ class _ScannerPageState extends State<ScannerPage> {
             final String? code = barcodes.first.rawValue;
 
             if (code != null) {
-              setState(() => _isScanned = true); // Trava novas leituras
-
-              // Fecha a tela de scanner e devolve a String lida para quem abriu
-              Navigator.pop(context, code);
+              setState(() => _isScanned = true);
+              Navigator.pop(context, code); // Devolve o código real lido
             }
           }
         },
