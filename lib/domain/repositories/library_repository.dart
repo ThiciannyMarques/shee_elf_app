@@ -1,24 +1,31 @@
 import '../entities/models.dart';
 
 abstract class LibraryRepository {
-  // Inicializa os dados (usado apenas no mock local)
-  Future<void> initMockData();
-
-  // Coleções
+  void setSession(String? email);
   Future<List<Collection>> getCollections();
   Future<Collection> createCollection(String name);
-  Future<Collection> joinCollection(String code);
+  Future<Collection> updateCollection(String collectionId, String name);
+  Future<void> deleteCollection(String collectionId);
 
-  // Localizações
   Future<List<Location>> getLocations(String collectionId);
   Future<Location> createLocation(String collectionId, String name);
+  Future<Location> updateLocation(String locationId, String name);
+  Future<void> deleteLocation(String locationId);
 
-  // Livros
   Future<List<Book>> getBooks(String collectionId);
-  Future<Book?> getBookDetailsFromMockBackend(
-    String isbn,
-  ); // Finge ir no Google Books
+  Future<Book> lookupBook(String isbn);
   Future<Book?> findBookInCollection(String collectionId, String isbn);
-  Future<void> addBookToCollection(Book book);
-  Future<void> removeBook(String bookId);
+  Future<Book> addBookToCollection(
+    String collectionId,
+    String? isbn, {
+    String? title,
+    String? author,
+  });
+  Future<Book> updateBook(
+    String collectionId,
+    Book book, {
+    String? title,
+    String? author,
+  });
+  Future<void> removeBook(String collectionId, Book book);
 }
