@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_spacing.dart';
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
@@ -11,6 +16,7 @@ class ScannerPage extends StatefulWidget {
 class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
   late final MobileScannerController _cameraController;
   bool _isScanned = false;
+  bool _torchOn = false;
 
   @override
   void initState() {
@@ -77,18 +83,25 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: colors.deepBlue,
       appBar: AppBar(
         title: const Text('Escanear Código de Barras'),
-        backgroundColor: Colors.black,
+        backgroundColor: colors.deepBlue,
         foregroundColor: Colors.white,
         actions: [
           // Controle de iluminação útil para leitura de códigos em papel
           IconButton(
-            icon: const Icon(Icons.flash_on),
+            icon: HugeIcon(
+              icon: _torchOn ? AppIcons.flashOn : AppIcons.flashOff,
+              color: _torchOn ? colors.butter : Colors.white,
+            ),
             tooltip: 'Lanterna',
-            onPressed: () => _cameraController.toggleTorch(),
+            onPressed: () {
+              _cameraController.toggleTorch();
+              setState(() => _torchOn = !_torchOn);
+            },
           ),
         ],
       ),
@@ -106,11 +119,7 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.videocam_off,
-                        color: Colors.red,
-                        size: 64,
-                      ),
+                      HugeIcon(icon: AppIcons.videoOff, color: colors.wine, size: 64),
                       const SizedBox(height: 16),
                       Text(
                         'Falha ao acessar a câmera nativa: ${error.errorCode.name}',
@@ -124,7 +133,7 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
                       const Text(
                         'Verifique se a permissão de câmera foi concedida no menu Configurações do dispositivo.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ],
                   ),
@@ -135,8 +144,8 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
 
           // Máscara escura ao redor do visor (guia visual de foco)
           ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.55),
+            colorFilter: const ColorFilter.mode(
+              Colors.black54,
               BlendMode.srcOut,
             ),
             child: Stack(
@@ -155,7 +164,7 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
                     height: 160,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                 ),
@@ -163,15 +172,26 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
             ),
           ),
 
-          // Borda do enquadramento de leitura
-          Align(
-            alignment: Alignment.center,
-            child: Container(
+          // Borda do enquadramento de leitura, com a folhinha da floresta no canto
+          Center(
+            child: SizedBox(
               width: 280,
               height: 160,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: colors.terracotta, width: 3),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  Positioned(
+                    left: -14,
+                    top: -14,
+                    child: HugeIcon(icon: AppIcons.leaf, color: colors.moss, size: 26),
+                  ),
+                ],
               ),
             ),
           ),
@@ -185,18 +205,18 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.black87,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white24),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: const Border.fromBorderSide(BorderSide(color: Colors.white24)),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
-                      SizedBox(width: 8),
-                      Text(
+                      HugeIcon(icon: AppIcons.sparkles, color: colors.butter, size: 18),
+                      const SizedBox(width: 8),
+                      const Text(
                         'Leitura Automática',
                         style: TextStyle(
                           color: Colors.white,
@@ -206,8 +226,8 @@ class _ScannerPageState extends State<ScannerPage> with WidgetsBindingObserver {
                       ),
                     ],
                   ),
-                  SizedBox(height: 6),
-                  Text(
+                  const SizedBox(height: 6),
+                  const Text(
                     'Aponte para as linhas do código de barras (ISBN).\nNão é necessário tirar foto ou tocar na tela.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white70, fontSize: 13),

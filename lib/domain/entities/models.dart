@@ -6,6 +6,19 @@ class Collection extends Equatable {
   final String? joinCode;
 
   const Collection({required this.id, required this.name, this.joinCode});
+
+  factory Collection.fromJson(Map<String, dynamic> json) {
+    return Collection(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      joinCode: json['joinCode'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'joinCode': joinCode};
+  }
+
   @override
   List<Object?> get props => [id, name, joinCode];
 }
@@ -20,6 +33,19 @@ class Location extends Equatable {
     required this.collectionId,
     required this.name,
   });
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      id: json['id'] as String,
+      collectionId: json['collectionId'] as String,
+      name: json['name'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'collectionId': collectionId, 'name': name};
+  }
+
   @override
   List<Object?> get props => [id, collectionId, name];
 }
@@ -42,6 +68,31 @@ class Book extends Equatable {
     required this.author,
     required this.collectionId,
   });
+
+  factory Book.fromJson(Map<String, dynamic> json) {
+    return Book(
+      id: json['id'] as String,
+      localId: json['localId'] as String?,
+      isPending: json['isPending'] as bool? ?? false,
+      isbn: json['isbn'] as String?,
+      title: json['title'] as String,
+      author: json['author'] as String,
+      collectionId: json['collectionId'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'localId': localId,
+      'isPending': isPending,
+      'isbn': isbn,
+      'title': title,
+      'author': author,
+      'collectionId': collectionId,
+    };
+  }
+
   @override
   List<Object?> get props => [
     id,

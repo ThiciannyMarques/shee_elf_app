@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/app_state.dart';
 import '../../domain/entities/models.dart';
 import '../controllers/library_controller.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/book_cover_tile.dart';
 import 'scanner_page.dart';
 
 class AddBookPage extends StatefulWidget {
@@ -70,39 +75,34 @@ class _AddBookPageState extends State<AddBookPage> {
   }
 
   Widget _buildBody(AppState<Book> state) {
+    final colors = context.colors;
+
     if (state is StateLoading<Book>) {
-      return const Column(
+      return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Consultando dados...'),
+          CircularProgressIndicator(color: colors.terracotta),
+          const SizedBox(height: 16),
+          const Text('Consultando dados...'),
         ],
       );
     }
 
     if (state is StateError<Book>) {
       if (_manualMode) return _buildManualForm();
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error, color: Colors.red, size: 64),
-          const SizedBox(height: 16),
-          Text(state.message, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          if (state.message.contains('Metadata provider unavailable'))
-            ElevatedButton.icon(
-              onPressed: () => setState(() => _manualMode = true),
-              icon: const Icon(Icons.edit),
-              label: const Text('Informar dados manualmente'),
-            ),
-          if (state.message.contains('Metadata provider unavailable'))
-            const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: _openCameraAndScan,
-            child: const Text('Tentar Novamente (Escanear)'),
-          ),
-        ],
+      final providerUnavailable =
+          state.message.contains('Metadata provider unavailable');
+      return AppEmptyState(
+        icon: AppIcons.warning,
+        iconColor: colors.wine,
+        title: 'Não foi possível consultar',
+        message: state.message,
+        actionLabel: 'Tentar novamente (escanear)',
+        onAction: _openCameraAndScan,
+        secondaryLabel:
+            providerUnavailable ? 'Informar dados manualmente' : null,
+        onSecondary:
+            providerUnavailable ? () => setState(() => _manualMode = true) : null,
       );
     }
 
@@ -112,28 +112,32 @@ class _AddBookPageState extends State<AddBookPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.library_books, size: 64, color: Colors.indigo),
+          Center(
+            child: BookCoverTile(
+              title: draftBook.title,
+              seed: draftBook.isbn ?? draftBook.title,
+              width: 96,
+              height: 144,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             draftBook.title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           Text(
             draftBook.author,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
+            style: TextStyle(color: colors.inkSoft, fontSize: 16),
           ),
           Text(
             'ISBN lido: ${draftBook.isbn}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(color: colors.inkFaint),
           ),
           const SizedBox(height: 32),
-
-          const SizedBox(height: 32),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
             onPressed: () => _controller.confirmAddBook(draftBook),
             child: const Text('Confirmar e Salvar na Coleção'),
           ),
@@ -146,21 +150,13 @@ class _AddBookPageState extends State<AddBookPage> {
     }
 
     if (state is StateComplete<Book>) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 80),
-          const SizedBox(height: 16),
-          const Text(
-            'Livro salvo com sucesso!',
-            style: TextStyle(fontSize: 20),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Voltar para a Biblioteca'),
-          ),
-        ],
+      return AppEmptyState(
+        icon: AppIcons.checkCircle,
+        iconColor: colors.moss,
+        title: 'Livro salvo com sucesso!',
+        message: 'Ele já está disponível na sua coleção.',
+        actionLabel: 'Voltar para a Biblioteca',
+        onAction: () => Navigator.pop(context),
       );
     }
 
@@ -171,14 +167,11 @@ class _AddBookPageState extends State<AddBookPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.qr_code_scanner, size: 100, color: Colors.grey),
+        HugeIcon(icon: AppIcons.scan, size: 88, color: colors.inkFaint),
         const SizedBox(height: 24),
         ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          ),
           onPressed: _openCameraAndScan,
-          icon: const Icon(Icons.camera_alt),
+          icon: HugeIcon(icon: AppIcons.camera, color: colors.textOnAccent),
           label: const Text('Abrir Câmera e Escanear'),
         ),
         TextButton.icon(
@@ -186,7 +179,7 @@ class _AddBookPageState extends State<AddBookPage> {
             _manualMode = true;
             _manualIsbn = null;
           }),
-          icon: const Icon(Icons.edit),
+          icon: HugeIcon(icon: AppIcons.edit, color: colors.terracottaDeep),
           label: const Text('Cadastrar sem ISBN'),
         ),
       ],
@@ -198,25 +191,19 @@ class _AddBookPageState extends State<AddBookPage> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Cadastrar livro sem ISBN',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _titleController,
-          decoration: const InputDecoration(
-            labelText: 'Título',
-            border: OutlineInputBorder(),
-          ),
+          decoration: const InputDecoration(labelText: 'Título'),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _authorController,
-          decoration: const InputDecoration(
-            labelText: 'Autor',
-            border: OutlineInputBorder(),
-          ),
+          decoration: const InputDecoration(labelText: 'Autor'),
         ),
         const SizedBox(height: 20),
         ElevatedButton(

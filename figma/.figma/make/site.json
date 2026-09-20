@@ -1,0 +1,10 @@
+{
+  "description": "Catalog and organize your physical book collection by scanning ISBNs, tracking locations, and sharing libraries with household members in a cozy, fantasy-inspired interface.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/di/service_locator.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/app_state.dart';
 import '../controllers/library_controller.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/book_cover_tile.dart';
 import 'add_book_page.dart';
 import 'scanner_page.dart';
 
@@ -59,30 +64,27 @@ class _ConsultBookPageState extends State<ConsultBookPage> {
   }
 
   Widget _buildBody(AppState<ConsultResult> state) {
+    final colors = context.colors;
+
     if (state is StateLoading<ConsultResult>) {
-      return const Column(
+      return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Procurando na sua coleção...'),
+          CircularProgressIndicator(color: colors.terracotta),
+          const SizedBox(height: 16),
+          const Text('Procurando na sua coleção...'),
         ],
       );
     }
 
     if (state is StateError<ConsultResult>) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error, color: Colors.red, size: 64),
-          const SizedBox(height: 16),
-          Text(state.message, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _openCameraAndScan,
-            child: const Text('Tentar Novamente'),
-          ),
-        ],
+      return AppEmptyState(
+        icon: AppIcons.warning,
+        iconColor: colors.wine,
+        title: 'Não foi possível consultar',
+        message: state.message,
+        actionLabel: 'Tentar novamente',
+        onAction: _openCameraAndScan,
       );
     }
 
@@ -93,21 +95,23 @@ class _ConsultBookPageState extends State<ConsultBookPage> {
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.check_circle_outline,
-              color: Colors.green,
-              size: 80,
-            ),
+            HugeIcon(icon: AppIcons.checkCircle, color: colors.moss, size: 72),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Você já tem este livro!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: colors.mossDeep,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
+            BookCoverTile(
+              title: result.book!.title,
+              seed: result.book!.id,
+              width: 88,
+              height: 132,
+            ),
+            const SizedBox(height: 12),
             Text(
               result.book!.title,
               style: const TextStyle(fontSize: 18),
@@ -115,11 +119,12 @@ class _ConsultBookPageState extends State<ConsultBookPage> {
             ),
             Text(
               result.book!.author,
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(color: colors.inkFaint),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'O backend confirma a presença deste livro na coleção selecionada.',
+              style: TextStyle(color: colors.inkSoft),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -130,42 +135,23 @@ class _ConsultBookPageState extends State<ConsultBookPage> {
           ],
         );
       } else {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.help_outline, color: Colors.orange, size: 80),
-            const SizedBox(height: 16),
-            const Text(
-              'Livro não encontrado.',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Você ainda não tem este livro na coleção selecionada.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Cadastrar este Livro'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
+        return AppEmptyState(
+          icon: AppIcons.searching,
+          iconColor: colors.terracottaDeep,
+          title: 'Livro não encontrado',
+          message: 'Você ainda não tem este livro na coleção selecionada.',
+          actionLabel: 'Cadastrar este Livro',
+          onAction: () {
+            _controller.resetBookFlow();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AddBookPage(initialIsbn: _lastScannedIsbn),
               ),
-              onPressed: () {
-                _controller.resetBookFlow();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddBookPage(initialIsbn: _lastScannedIsbn),
-                  ),
-                );
-              },
-            ),
-            TextButton(
-              onPressed: _openCameraAndScan,
-              child: const Text('Consultar Outro'),
-            ),
-          ],
+            );
+          },
+          secondaryLabel: 'Consultar Outro',
+          onSecondary: _openCameraAndScan,
         );
       }
     }
@@ -173,20 +159,17 @@ class _ConsultBookPageState extends State<ConsultBookPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.document_scanner, size: 100, color: Colors.grey),
+        HugeIcon(icon: AppIcons.scan, size: 96, color: colors.inkFaint),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Descubra rapidamente se você já possui um livro ou mangá e onde ele está guardado.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(color: colors.inkSoft, fontSize: 16),
         ),
         const SizedBox(height: 32),
         ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          ),
           onPressed: _openCameraAndScan,
-          icon: const Icon(Icons.camera_alt),
+          icon: HugeIcon(icon: AppIcons.camera, color: colors.textOnAccent),
           label: const Text('Abrir Câmera para Consultar'),
         ),
       ],

@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../core/di/service_locator.dart';
 import '../../core/network/api_client.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../datasources/local_data_source.dart';
 
 class ApiAuthRepositoryImpl implements AuthRepository {
   final ApiClient apiClient;
@@ -11,16 +13,12 @@ class ApiAuthRepositoryImpl implements AuthRepository {
 
   ApiAuthRepositoryImpl(this.apiClient, this.secureStorage);
 
+  LocalDataSource get _localDataSource => getIt<LocalDataSource>();
+
   Future<void> _saveUser(User user) async {
     await secureStorage.write(key: 'current_user_email', value: user.email);
     await secureStorage.write(key: 'current_user_name', value: user.name);
   }
-
-  bool _isOffline(DioException exception) =>
-      exception.type == DioExceptionType.connectionError ||
-      exception.type == DioExceptionType.connectionTimeout ||
-      exception.type == DioExceptionType.receiveTimeout ||
-      exception.type == DioExceptionType.sendTimeout;
 
   String _extractErrorMessage(DioException e) {
     if (e.response?.data != null) {
@@ -55,6 +53,11 @@ class ApiAuthRepositoryImpl implements AuthRepository {
       await _saveUser(user);
       return user;
     } on DioException catch (e) {
+      if (ApiClient.isOfflineException(e)) {
+        throw Exception(
+          'Sem conexão. Não é possível realizar login no momento.',
+        );
+      }
       throw Exception(_extractErrorMessage(e));
     }
   }
@@ -79,6 +82,11 @@ class ApiAuthRepositoryImpl implements AuthRepository {
       await _saveUser(user);
       return user;
     } on DioException catch (e) {
+      if (ApiClient.isOfflineException(e)) {
+        throw Exception(
+          'Sem conexão. Não é possível realizar cadastro no momento.',
+        );
+      }
       throw Exception(_extractErrorMessage(e));
     }
   }
@@ -97,7 +105,7 @@ class ApiAuthRepositoryImpl implements AuthRepository {
 
       return User.fromJson(userJson);
     } on DioException catch (exception) {
-      if (_isOffline(exception)) {
+      if (ApiClient.isOfflineException(exception)) {
         final email = await secureStorage.read(key: 'current_user_email');
         final name = await secureStorage.read(key: 'current_user_name');
         if (email != null && name != null) {
@@ -111,6 +119,10 @@ class ApiAuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    final email = await secureStorage.read(key: 'current_user_email');
+    if (email != null) {
+      await _localDataSource.clearCacheForUser(email);
+    }
     await secureStorage.delete(key: 'jwt_token');
     await secureStorage.delete(key: 'current_user_email');
     await secureStorage.delete(key: 'current_user_name');

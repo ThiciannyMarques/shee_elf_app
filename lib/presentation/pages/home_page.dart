@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/localization/app_locale_controller.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/app_state.dart';
 import '../../domain/entities/models.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/library_controller.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/book_cover_tile.dart';
+import '../widgets/location_badge.dart';
 import 'add_book_page.dart';
 import 'auth_pages.dart';
 import 'consult_book_page.dart';
@@ -178,16 +184,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             children: _controller.currentLocations
                 .map(
                   (location) => ListTile(
+                    leading: LocationBadge(name: location.name, size: 40),
                     title: Text(location.name),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit),
+                          icon: HugeIcon(icon: AppIcons.edit, color: context.colors.terracottaDeep, size: 20),
                           onPressed: () => _editLocation(location),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                          icon: HugeIcon(icon: AppIcons.trash, color: context.colors.wine, size: 20),
                           onPressed: () async {
                             await _controller.deleteLocation(location);
                             if (dialogContext.mounted)
@@ -237,20 +244,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Widget _buildDrawer() {
     final strings = AppLocalizations.of(context);
+    final colors = context.colors;
     return Drawer(
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Text(
                 'Minhas Coleções',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
             const Divider(height: 1),
@@ -264,8 +268,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                   return ListTile(
                     selected: isSelected,
-                    selectedTileColor: Colors.indigo.withOpacity(0.1),
-                    leading: const Icon(Icons.library_books),
+                    selectedTileColor: colors.bg2,
+                    leading: HugeIcon(icon: AppIcons.shelf, color: colors.ink),
                     title: Text(
                       col.name,
                       style: TextStyle(
@@ -306,7 +310,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.language),
+              leading: HugeIcon(icon: AppIcons.language, color: colors.ink),
               title: Text(strings.language),
               trailing: DropdownButton<Locale>(
                 value: getIt<AppLocaleController>().locale,
@@ -329,7 +333,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.add),
+              leading: HugeIcon(icon: AppIcons.add, color: colors.ink),
               title: const Text('Nova Coleção'),
               onTap: () {
                 Navigator.pop(context);
@@ -338,8 +342,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Sair', style: TextStyle(color: Colors.red)),
+              leading: HugeIcon(icon: AppIcons.logout, color: colors.wine),
+              title: Text('Sair', style: TextStyle(color: colors.wine)),
               onTap: () async {
                 Navigator.pop(context);
                 await _authController.logout();
@@ -368,24 +372,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
 
     if (state is StateError<void>) {
+      final colors = context.colors;
       return Scaffold(
         appBar: AppBar(title: const Text('Biblioteca')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off, color: Colors.red, size: 56),
-                const SizedBox(height: 16),
-                Text(state.message, textAlign: TextAlign.center),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _controller.initializeApp,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tentar novamente'),
-                ),
-              ],
+            child: AppEmptyState(
+              icon: AppIcons.offline,
+              iconColor: colors.wine,
+              title: 'Sem conexão',
+              message: state.message,
+              actionLabel: 'Tentar novamente',
+              onAction: _controller.initializeApp,
             ),
           ),
         ),
@@ -396,10 +395,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       return Scaffold(
         appBar: AppBar(title: const Text('Biblioteca')),
         drawer: _buildDrawer(),
-        body: const Center(
-          child: Text(
-            'Nenhuma coleção selecionada.\nAbra o menu lateral para criar.',
-            textAlign: TextAlign.center,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: AppEmptyState(
+              icon: AppIcons.shelf,
+              iconColor: context.colors.plum,
+              title: 'Nenhuma coleção selecionada',
+              message: 'Abra o menu lateral para criar ou escolher uma.',
+            ),
           ),
         ),
       );
@@ -410,7 +414,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         title: Text(_controller.currentCollection!.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.document_scanner_outlined),
+            icon: HugeIcon(icon: AppIcons.scan),
             tooltip: 'Consultar Livro',
             onPressed: () {
               _controller.resetConsultFlow();
@@ -421,12 +425,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.add_location_alt_outlined),
+            icon: HugeIcon(icon: AppIcons.exploreLocation),
             tooltip: 'Criar Localização',
             onPressed: _showCreateLocationDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.location_on_outlined),
+            icon: HugeIcon(icon: AppIcons.location),
             tooltip: 'Gerenciar localizações',
             onPressed: _showLocationsDialog,
           ),
@@ -434,18 +438,29 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
       drawer: _buildDrawer(),
       body: _controller.currentBooks.isEmpty
-          ? const Center(
-              child: Text(
-                'Sua coleção está vazia.\nAdicione seu primeiro livro! 👇',
-                textAlign: TextAlign.center,
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: AppEmptyState(
+                  icon: AppIcons.book,
+                  iconColor: context.colors.moss,
+                  title: 'Sua coleção está vazia',
+                  message: 'Adicione seu primeiro livro pelo botão abaixo.',
+                ),
               ),
             )
           : ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _controller.currentBooks.length,
               itemBuilder: (context, index) {
                 final book = _controller.currentBooks[index];
                 return ListTile(
-                  leading: const Icon(Icons.book),
+                  leading: BookCoverTile(
+                    title: book.title,
+                    seed: book.id,
+                    width: 40,
+                    height: 58,
+                  ),
                   title: Text(
                     book.isPending ? '${book.title} (pendente)' : book.title,
                   ),
@@ -455,7 +470,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   isThreeLine: true,
                   onTap: () => _showEditBookDialog(book),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
+                    icon: HugeIcon(icon: AppIcons.trash, color: context.colors.wine),
                     onPressed: () => _confirmDelete(context, book),
                   ),
                 );
@@ -469,7 +484,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             MaterialPageRoute(builder: (_) => const AddBookPage()),
           );
         },
-        icon: const Icon(Icons.add),
+        icon: HugeIcon(icon: AppIcons.add, color: context.colors.textOnAccent),
         label: const Text('Cadastrar'),
       ),
     );
@@ -504,7 +519,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     }
                   });
             },
-            child: const Text('Remover', style: TextStyle(color: Colors.red)),
+            child: Text('Remover', style: TextStyle(color: context.colors.wine)),
           ),
         ],
       ),
@@ -529,7 +544,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               await _controller.deleteCurrentCollection();
               if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
-            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            child: Text('Excluir', style: TextStyle(color: context.colors.wine)),
           ),
         ],
       ),

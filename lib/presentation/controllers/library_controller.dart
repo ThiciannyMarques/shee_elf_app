@@ -4,7 +4,6 @@ import '../../core/utils/app_state.dart';
 import '../../domain/entities/models.dart';
 import '../../domain/repositories/library_repository.dart';
 
-// Classe auxiliar para o resultado da consulta
 class ConsultResult {
   final bool isFound;
   final Book? book;
@@ -18,17 +17,14 @@ class LibraryController extends ChangeNotifier {
 
   LibraryController(this._repo);
 
-  // Estados Globais
   Collection? currentCollection;
   List<Collection> myCollections = [];
   List<Location> currentLocations = [];
   List<Book> currentBooks = [];
 
-  // Estados locais
   AppState<void> screenState = StateInitial();
   AppState<Book> bookFlowState = StateInitial();
-  AppState<ConsultResult> consultFlowState =
-      StateInitial(); // NOVO: Estado da consulta
+  AppState<ConsultResult> consultFlowState = StateInitial();
 
   void clearSession() {
     currentCollection = null;
@@ -78,8 +74,6 @@ class LibraryController extends ChangeNotifier {
     screenState = StateSuccess(null);
     notifyListeners();
   }
-
-  // --- FUNÇÕES DOS MODAIS ---
 
   Future<void> createNewCollection(String name) async {
     screenState = StateLoading();
@@ -173,8 +167,6 @@ class LibraryController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- NOVO: FUNÇÕES DE CONSULTA ---
-
   Future<void> consultBookByIsbn(String isbn) async {
     if (currentCollection == null) return;
 
@@ -192,7 +184,6 @@ class LibraryController extends ChangeNotifier {
           ConsultResult(isFound: true, book: book),
         );
       } else {
-        // Não encontrou
         consultFlowState = StateSuccess<ConsultResult>(
           ConsultResult(isFound: false),
         );
@@ -207,8 +198,6 @@ class LibraryController extends ChangeNotifier {
     consultFlowState = StateInitial();
     notifyListeners();
   }
-
-  // --- FUNÇÕES DE CADASTRO DE LIVROS ---
 
   Future<void> scanAndDraftBook(String isbn) async {
     if (currentCollection == null) return;
@@ -259,7 +248,7 @@ class LibraryController extends ChangeNotifier {
     bookFlowState = StateLoading<Book>();
     notifyListeners();
     try {
-      final book = await _repo.addBookToCollection(
+      await _repo.addBookToCollection(
         currentCollection!.id,
         isbn,
         title: title,

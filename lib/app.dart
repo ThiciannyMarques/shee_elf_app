@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/di/service_locator.dart';
 import 'core/localization/app_locale_controller.dart';
+import 'core/theme/app_theme.dart';
 import 'presentation/pages/auth_pages.dart';
 
 class MyApp extends StatelessWidget {
@@ -27,7 +28,9 @@ class MyApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(primarySwatch: Colors.indigo, useMaterial3: true),
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeMode.system,
           home: const SplashPage(),
         );
       },
