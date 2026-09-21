@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/localization/app_locale_controller.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/app_state.dart';
 import '../../domain/entities/models.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/library_controller.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/book_cover_tile.dart';
+import '../widgets/location_badge.dart';
+
 import 'add_book_page.dart';
 import 'auth_pages.dart';
 import 'consult_book_page.dart';
+import 'book_detail_page.dart';
+import 'locations_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +31,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final _controller = getIt<LibraryController>();
   final _authController = getIt<AuthController>();
+
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -166,351 +179,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  void _showLocationsDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Localizações'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView(
-            shrinkWrap: true,
-            children: _controller.currentLocations
-                .map(
-                  (location) => ListTile(
-                    title: Text(location.name),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _editLocation(location),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            await _controller.deleteLocation(location);
-                            if (dialogContext.mounted)
-                              Navigator.pop(dialogContext);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _editLocation(Location location) async {
-    final textController = TextEditingController(text: location.name);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Renomear localização'),
-        content: TextField(controller: textController, autofocus: true),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, textController.text.trim()),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-    if (name != null && name.isNotEmpty)
-      await _controller.updateLocation(location, name);
-  }
-
-  Widget _buildDrawer() {
-    final strings = AppLocalizations.of(context);
-    return Drawer(
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Minhas Coleções',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _controller.myCollections.length,
-                itemBuilder: (context, index) {
-                  final col = _controller.myCollections[index];
-                  final isSelected =
-                      col.id == _controller.currentCollection?.id;
-
-                  return ListTile(
-                    selected: isSelected,
-                    selectedTileColor: Colors.indigo.withOpacity(0.1),
-                    leading: const Icon(Icons.library_books),
-                    title: Text(
-                      col.name,
-                      style: TextStyle(
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: col.joinCode == null
-                        ? null
-                        : Text('Código: ${col.joinCode}'),
-                    trailing: col.id == _controller.currentCollection?.id
-                        ? PopupMenuButton<String>(
-                            onSelected: (action) {
-                              if (action == 'edit') _showEditCollectionDialog();
-                              if (action == 'delete')
-                                _confirmDeleteCollection();
-                            },
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Renomear'),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Excluir'),
-                              ),
-                            ],
-                          )
-                        : null,
-                    onTap: () {
-                      _controller.selectCollection(col);
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: Text(strings.language),
-              trailing: DropdownButton<Locale>(
-                value: getIt<AppLocaleController>().locale,
-                underline: const SizedBox.shrink(),
-                items: [
-                  DropdownMenuItem(
-                    value: const Locale('pt'),
-                    child: Text(strings.portuguese),
-                  ),
-                  DropdownMenuItem(
-                    value: const Locale('en'),
-                    child: Text(strings.english),
-                  ),
-                ],
-                onChanged: (locale) {
-                  if (locale != null) {
-                    getIt<AppLocaleController>().setLocale(locale);
-                  }
-                },
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Nova Coleção'),
-              onTap: () {
-                Navigator.pop(context);
-                _showCreateCollectionDialog();
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Sair', style: TextStyle(color: Colors.red)),
-              onTap: () async {
-                Navigator.pop(context);
-                await _authController.logout();
-                getIt<LibraryRepository>().setSession(null);
-                _controller.clearSession();
-                if (mounted)
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                  );
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = _controller.screenState;
-
-    if (state is StateLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (state is StateError<void>) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Biblioteca')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off, color: Colors.red, size: 56),
-                const SizedBox(height: 16),
-                Text(state.message, textAlign: TextAlign.center),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _controller.initializeApp,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Tentar novamente'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (_controller.currentCollection == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Biblioteca')),
-        drawer: _buildDrawer(),
-        body: const Center(
-          child: Text(
-            'Nenhuma coleção selecionada.\nAbra o menu lateral para criar.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_controller.currentCollection!.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.document_scanner_outlined),
-            tooltip: 'Consultar Livro',
-            onPressed: () {
-              _controller.resetConsultFlow();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ConsultBookPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_location_alt_outlined),
-            tooltip: 'Criar Localização',
-            onPressed: _showCreateLocationDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.location_on_outlined),
-            tooltip: 'Gerenciar localizações',
-            onPressed: _showLocationsDialog,
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(),
-      body: _controller.currentBooks.isEmpty
-          ? const Center(
-              child: Text(
-                'Sua coleção está vazia.\nAdicione seu primeiro livro! 👇',
-                textAlign: TextAlign.center,
-              ),
-            )
-          : ListView.builder(
-              itemCount: _controller.currentBooks.length,
-              itemBuilder: (context, index) {
-                final book = _controller.currentBooks[index];
-                return ListTile(
-                  leading: const Icon(Icons.book),
-                  title: Text(
-                    book.isPending ? '${book.title} (pendente)' : book.title,
-                  ),
-                  subtitle: Text(
-                    book.author.isEmpty ? 'Autor não informado' : book.author,
-                  ),
-                  isThreeLine: true,
-                  onTap: () => _showEditBookDialog(book),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _confirmDelete(context, book),
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _controller.resetBookFlow();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddBookPage()),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Cadastrar'),
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, Book book) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Remover livro?'),
-        content: Text('Deseja retirar "${book.title}" da coleção?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              _controller
-                  .removeBook(book.id)
-                  .then((_) {
-                    if (context.mounted) Navigator.pop(context);
-                  })
-                  .catchError((error) {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Não foi possível remover: $error'),
-                        ),
-                      );
-                    }
-                  });
-            },
-            child: const Text('Remover', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _confirmDeleteCollection() {
     showDialog(
       context: context,
@@ -529,61 +197,509 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               await _controller.deleteCurrentCollection();
               if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
-            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Excluir',
+              style: TextStyle(color: context.colors.wine),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showEditBookDialog(Book book) {
-    final titleController = TextEditingController(text: book.title);
-    final authorController = TextEditingController(text: book.author);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Editar livro'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildDrawer() {
+    final strings = AppLocalizations.of(context);
+    final colors = context.colors;
+
+    return Drawer(
+      backgroundColor: colors.wood,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Título'),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: colors.ink.withOpacity(0.12)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'She Elf',
+                    style: AppTypography.display(
+                      color: colors.butter,
+                      fontSize: 20,
+                    ),
+                  ),
+                  Text(
+                    'PROTÓTIPO',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 11,
+                      color: colors.inkFaint,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            TextField(
-              controller: authorController,
-              decoration: const InputDecoration(labelText: 'Autor'),
+            const SizedBox(height: 8),
+
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Text(
+                      'MINHAS COLEÇÕES',
+                      style: TextStyle(
+                        fontFamily: 'Fraunces',
+                        fontSize: 11,
+                        color: colors.inkFaint,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                  ..._controller.myCollections.map((col) {
+                    final isSelected =
+                        col.id == _controller.currentCollection?.id;
+                    return ListTile(
+                      selected: isSelected,
+                      selectedTileColor: colors.ink.withOpacity(0.08),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                      ),
+                      title: Text(
+                        col.name,
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 13,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                          color: isSelected ? colors.ink : colors.inkSoft,
+                        ),
+                      ),
+                      subtitle: col.joinCode == null
+                          ? null
+                          : Text(
+                              'Código: ${col.joinCode}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.inkFaint,
+                              ),
+                            ),
+                      trailing: isSelected
+                          ? PopupMenuButton<String>(
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: colors.inkSoft,
+                                size: 20,
+                              ),
+                              onSelected: (action) {
+                                if (action == 'edit')
+                                  _showEditCollectionDialog();
+                                if (action == 'delete')
+                                  _confirmDeleteCollection();
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Renomear'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Excluir'),
+                                ),
+                              ],
+                            )
+                          : null,
+                      onTap: () {
+                        _controller.selectCollection(col);
+                        Navigator.pop(context);
+                      },
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Text(
+                      'AÇÕES',
+                      style: TextStyle(
+                        fontFamily: 'Fraunces',
+                        fontSize: 11,
+                        color: colors.inkFaint,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: HugeIcon(
+                      icon: AppIcons.add,
+                      color: colors.inkSoft,
+                      size: 20,
+                    ),
+                    title: Text(
+                      'Nova Coleção',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 13,
+                        color: colors.inkSoft,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showCreateCollectionDialog();
+                    },
+                  ),
+                  ListTile(
+                    leading: HugeIcon(
+                      icon: AppIcons.language,
+                      color: colors.inkSoft,
+                      size: 20,
+                    ),
+                    title: Text(
+                      strings.language,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 13,
+                        color: colors.inkSoft,
+                      ),
+                    ),
+                    trailing: DropdownButton<Locale>(
+                      value: getIt<AppLocaleController>().locale,
+                      underline: const SizedBox.shrink(),
+                      dropdownColor: colors.bg1,
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 13,
+                        color: colors.ink,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: const Locale('pt'),
+                          child: Text(strings.portuguese),
+                        ),
+                        DropdownMenuItem(
+                          value: const Locale('en'),
+                          child: Text(strings.english),
+                        ),
+                      ],
+                      onChanged: (locale) {
+                        if (locale != null)
+                          getIt<AppLocaleController>().setLocale(locale);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: colors.ink.withOpacity(0.10)),
+                ),
+              ),
+              child: ListTile(
+                leading: HugeIcon(
+                  icon: AppIcons.logout,
+                  color: colors.wine,
+                  size: 20,
+                ),
+                title: Text(
+                  'Sair',
+                  style: TextStyle(
+                    fontFamily: 'Manrope',
+                    fontSize: 13,
+                    color: colors.wine,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _authController.logout();
+                  getIt<LibraryRepository>().setSession(null);
+                  _controller.clearSession();
+                  if (mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthPage()),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final collection = _controller.currentCollection;
-              if (collection == null || titleController.text.trim().isEmpty)
-                return;
-              try {
-                await _controller.updateBook(
-                  book,
-                  titleController.text,
-                  authorController.text,
-                );
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-              } catch (error) {
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-                if (mounted)
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text('$error')));
-              }
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    final colors = context.colors;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      height: 64 + bottomPadding,
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      decoration: BoxDecoration(
+        color: colors.bg1,
+        border: Border(top: BorderSide(color: colors.line)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(0, 'Início', Icons.home_outlined, Icons.home),
+          _buildNavItem(1, 'Lugares', Icons.vpn_key_outlined, Icons.vpn_key),
+
+          GestureDetector(
+            onTap: () {
+              _controller.resetBookFlow();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddBookPage()),
+              );
             },
-            child: const Text('Salvar'),
+            child: Container(
+              width: 52,
+              height: 52,
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: colors.terracotta,
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black45,
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.qr_code_scanner, color: colors.ink),
+            ),
           ),
+
+          _buildNavItem(3, 'Consultar', Icons.search_outlined, Icons.search),
+          _buildNavItem(4, 'Mais', Icons.menu_outlined, Icons.menu),
         ],
       ),
+    );
+  }
+
+  Widget _buildNavItem(
+    int index,
+    String label,
+    IconData iconOff,
+    IconData iconOn,
+  ) {
+    final colors = context.colors;
+    final isActive = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () {
+        if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LocationsPage()),
+          );
+        } else if (index == 3) {
+          _controller.resetConsultFlow();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ConsultBookPage()),
+          );
+        } else if (index == 4) {
+          Scaffold.of(context).openDrawer();
+        } else {
+          setState(() => _currentIndex = index);
+        }
+      },
+      child: Container(
+        color: Colors.transparent,
+        width: 60,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isActive ? iconOn : iconOff,
+              color: isActive ? colors.terracotta : colors.inkFaint,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive ? colors.terracotta : colors.inkFaint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = _controller.screenState;
+    final colors = context.colors;
+
+    if (state is StateLoading) {
+      return Scaffold(
+        backgroundColor: colors.bg0,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (state is StateError<void>) {
+      return Scaffold(
+        backgroundColor: colors.bg0,
+        appBar: AppBar(title: const Text('Biblioteca')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: AppEmptyState(
+              icon: AppIcons.offline,
+              iconColor: colors.wine,
+              title: 'Sem conexão',
+              message: state.message,
+              actionLabel: 'Tentar novamente',
+              onAction: _controller.initializeApp,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_controller.currentCollection == null) {
+      return Scaffold(
+        backgroundColor: colors.bg0,
+        appBar: AppBar(title: const Text('Biblioteca')),
+        drawer: _buildDrawer(),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: AppEmptyState(
+              icon: AppIcons.shelf,
+              iconColor: colors.plum,
+              title: 'Nenhuma coleção selecionada',
+              message: 'Abra o menu lateral para criar ou escolher uma.',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: colors.bg0,
+      drawer: _buildDrawer(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top,
+            left: 20,
+            right: 12,
+          ),
+          decoration: BoxDecoration(
+            color: colors.bg0,
+            border: Border(bottom: BorderSide(color: colors.line)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _controller.currentCollection!.name,
+                      style: AppTypography.display(
+                        color: colors.ink,
+                        fontSize: 20,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${_controller.currentBooks.length} livros',
+                      style: TextStyle(
+                        fontFamily: 'Manrope',
+                        fontSize: 12,
+                        color: colors.inkFaint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: HugeIcon(
+                  icon: AppIcons.exploreLocation,
+                  color: colors.ink,
+                ),
+                onPressed: _showCreateLocationDialog,
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      body: _controller.currentBooks.isEmpty
+          ? Center(
+              child: AppEmptyState(
+                icon: AppIcons.book,
+                iconColor: colors.moss,
+                title: 'Sua coleção está vazia',
+                message:
+                    'Adicione seu primeiro livro pelo botão de scanner abaixo.',
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 0.65,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 24,
+              ),
+              itemCount: _controller.currentBooks.length,
+              itemBuilder: (context, index) {
+                final book = _controller.currentBooks[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookDetailPage(book: book),
+                      ),
+                    );
+                  },
+                  child: BookCoverTile(
+                    title: book.title,
+                    author: book.author.isEmpty ? null : book.author,
+                    seed: book.id,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                );
+              },
+            ),
+
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 }

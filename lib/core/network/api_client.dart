@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -5,6 +7,22 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiClient {
   final Dio dio;
   final FlutterSecureStorage secureStorage;
+
+  // Validador definitivo para falhas de rede e servidores offline
+  static bool isOfflineException(Exception error) {
+    if (error is DioException) {
+      return error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.connectionError ||
+          error.error is SocketException ||
+          (error.message?.toLowerCase().contains('connection refused') ??
+              false) ||
+          (error.message?.toLowerCase().contains('network is unreachable') ??
+              false);
+    }
+    return error is SocketException;
+  }
 
   ApiClient(this.secureStorage)
     : dio = Dio(
