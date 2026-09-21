@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Three small dots pulsing in sequence — no card, no border, nothing that
-/// reads as a UI box sitting on top of painted art. Meant to float directly
-/// over a scene (e.g. near the lantern on the splash) rather than live on a
-/// flat surface.
+import '../../core/theme/app_colors.dart';
+
 class EmberDotsLoader extends StatefulWidget {
-  final Color color;
+  final Color? color;
   final double dotSize;
 
-  const EmberDotsLoader({
-    super.key,
-    this.color = const Color(0xFFDDAE4C),
-    this.dotSize = 6,
-  });
+  const EmberDotsLoader({super.key, this.color, this.dotSize = 6});
 
   @override
   State<EmberDotsLoader> createState() => _EmberDotsLoaderState();
@@ -22,7 +16,7 @@ class _EmberDotsLoaderState extends State<EmberDotsLoader>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: const Duration(milliseconds: 1000),
   )..repeat();
 
   @override
@@ -33,6 +27,11 @@ class _EmberDotsLoaderState extends State<EmberDotsLoader>
 
   @override
   Widget build(BuildContext context) {
+    final defaultColor =
+        Theme.of(context).extension<AppColors>()?.terracotta ??
+        const Color(0xFFD08653);
+    final dotColor = widget.color ?? defaultColor;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -40,8 +39,8 @@ class _EmberDotsLoaderState extends State<EmberDotsLoader>
           mainAxisSize: MainAxisSize.min,
           children: [
             for (var i = 0; i < 3; i++) ...[
-              if (i > 0) SizedBox(width: widget.dotSize * 0.7),
-              _buildDot(i),
+              if (i > 0) SizedBox(width: widget.dotSize * 1.5),
+              _buildDot(i, dotColor),
             ],
           ],
         );
@@ -49,12 +48,13 @@ class _EmberDotsLoaderState extends State<EmberDotsLoader>
     );
   }
 
-  Widget _buildDot(int index) {
-    final phase = (index * 0.22);
+  Widget _buildDot(int index, Color color) {
+    final phase = index * 0.2;
     final localT = (_controller.value + phase) % 1.0;
-    final pulse = (localT < 0.5) ? (localT * 2) : (2 - localT * 2);
-    final opacity = 0.35 + pulse * 0.65;
-    final scale = 0.7 + pulse * 0.3;
+
+    final pulse = localT < 0.5 ? localT * 2 : 2 - (localT * 2);
+    final opacity = 0.3 + (pulse * 0.7);
+    final scale = 0.8 + (pulse * 0.4);
 
     return Opacity(
       opacity: opacity.clamp(0.0, 1.0),
@@ -64,8 +64,16 @@ class _EmberDotsLoaderState extends State<EmberDotsLoader>
           width: widget.dotSize,
           height: widget.dotSize,
           decoration: BoxDecoration(
-            color: widget.color,
+            color: color,
             shape: BoxShape.circle,
+            boxShadow: [
+              if (pulse > 0.5)
+                BoxShadow(
+                  color: color.withOpacity(0.5),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+            ],
           ),
         ),
       ),

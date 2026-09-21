@@ -1,60 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Two-family type system: Fraunces for display/serif moments (titles,
-/// book titles, the brandmark) and Manrope for UI/body text.
 class AppTypography {
   AppTypography._();
 
   static TextStyle display({
     required Color color,
-    double fontSize = 22,
+    double fontSize = 24,
     FontWeight fontWeight = FontWeight.w600,
   }) => GoogleFonts.fraunces(
     color: color,
     fontSize: fontSize,
     fontWeight: fontWeight,
-    letterSpacing: -0.1,
+    letterSpacing: 0,
   );
 
   static TextTheme textTheme(Color ink) {
     final base = GoogleFonts.manropeTextTheme();
     return base
         .copyWith(
-          displayLarge: display(color: ink, fontSize: 37),
-          displayMedium: display(color: ink, fontSize: 30),
-          displaySmall: display(color: ink, fontSize: 26),
-          headlineLarge: display(color: ink, fontSize: 26),
-          headlineMedium: display(color: ink, fontSize: 21),
-          headlineSmall: display(color: ink, fontSize: 18),
-          titleLarge: display(color: ink, fontSize: 18),
+          displayLarge: display(color: ink, fontSize: 44),
+          displayMedium: display(color: ink, fontSize: 32),
+          displaySmall: display(color: ink, fontSize: 24),
+          headlineLarge: display(color: ink, fontSize: 24),
+          headlineMedium: display(color: ink, fontSize: 20),
+          headlineSmall: display(color: ink, fontSize: 17),
+          titleLarge: display(color: ink, fontSize: 17),
           titleMedium: GoogleFonts.manrope(
             color: ink,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
           ),
           titleSmall: GoogleFonts.manrope(
-            color: ink,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-          bodyLarge: GoogleFonts.manrope(color: ink, fontSize: 16),
-          bodyMedium: GoogleFonts.manrope(color: ink, fontSize: 14),
-          bodySmall: GoogleFonts.manrope(color: ink, fontSize: 13),
-          labelLarge: GoogleFonts.manrope(
-            color: ink,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-          ),
-          labelMedium: GoogleFonts.manrope(
             color: ink,
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
+          bodyLarge: GoogleFonts.manrope(
+            color: ink,
+            fontSize: 17,
+            fontWeight: FontWeight.w400,
+          ),
+          bodyMedium: GoogleFonts.manrope(
+            color: ink,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+          bodySmall: GoogleFonts.manrope(
+            color: ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+          labelLarge: GoogleFonts.manrope(
+            color: ink,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          labelMedium: GoogleFonts.manrope(
+            color: ink,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
           labelSmall: GoogleFonts.manrope(
             color: ink,
             fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         )
         .apply(bodyColor: ink, displayColor: ink);

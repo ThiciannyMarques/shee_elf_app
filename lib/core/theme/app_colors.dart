@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Semantic color tokens for the "cozy fantasy library" visual language.
-///
-/// Materiality comes from solid, warm, natural pigments (moss, terracotta,
-/// wine, plum, wood) rather than glow/gradient/glassmorphism — never give a
-/// widget a bespoke color, pull it from here so light/dark stay in sync.
 class AppColors extends ThemeExtension<AppColors> {
   final Color bg0;
   final Color bg1;
@@ -30,7 +25,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color butter;
   final Color sand;
   final Color wood;
+  final Color woodMid;
   final Color rose;
+  final Color skyNight;
 
   const AppColors({
     required this.bg0,
@@ -54,59 +51,62 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.butter,
     required this.sand,
     required this.wood,
+    required this.woodMid,
     required this.rose,
+    required this.skyNight,
   });
 
-  /// Amanhecer — light mode.
-  static const light = AppColors(
-    bg0: Color(0xFFF2E9D8),
-    bg1: Color(0xFFFBF6EC),
-    bg2: Color(0xFFE9DCC1),
-    bg3: Color(0xFFDCCBA8),
-    scrim: Color(0x6B3A2A1A),
-    ink: Color(0xFF332417),
-    inkSoft: Color(0xAD332417),
-    inkFaint: Color(0x75332417),
-    textOnAccent: Color(0xFFFBF6EC),
-    line: Color(0x24332417),
-    lineStrong: Color(0x42332417),
-    moss: Color(0xFF5C7A54),
-    mossDeep: Color(0xFF3F5A3C),
-    terracotta: Color(0xFFBE6A3E),
-    terracottaDeep: Color(0xFF8F4C29),
-    wine: Color(0xFF7C3F42),
-    plum: Color(0xFF63415C),
-    deepBlue: Color(0xFF33455E),
-    butter: Color(0xFFDDAE4C),
-    sand: Color(0xFFC9A876),
-    wood: Color(0xFF6E4A30),
-    rose: Color(0xFFB97F72),
+  static final light = AppColors(
+    bg0: const Color(0xFFF4EDE0),
+    bg1: const Color(0xFFEAE0CF),
+    bg2: const Color(0xFFDDD2BC),
+    bg3: const Color(0xFFCFC2A8),
+    scrim: const Color(0xFFF4EDE0).withOpacity(0.88),
+    ink: const Color(0xFF1C110A),
+    inkSoft: const Color(0xFF1C110A).withOpacity(0.72),
+    inkFaint: const Color(0xFF1C110A).withOpacity(0.44),
+    textOnAccent: const Color(0xFFF4EDE0),
+    line: const Color(0xFF1C110A).withOpacity(0.10),
+    lineStrong: const Color(0xFF1C110A).withOpacity(0.22),
+    moss: const Color(0xFF4E7A47),
+    mossDeep: const Color(0xFF365630),
+    terracotta: const Color(0xFFB86030),
+    terracottaDeep: const Color(0xFF9A4A22),
+    wine: const Color(0xFF963840),
+    plum: const Color(0xFF6A4880),
+    deepBlue: const Color(0xFF486898),
+    butter: const Color(0xFF9A6810),
+    sand: const Color(0xFFC9A876),
+    wood: const Color(0xFF6B4A28),
+    woodMid: const Color(0xFF8C6038),
+    rose: const Color(0xFFA06850),
+    skyNight: const Color(0xFF1A2040),
   );
-
-  /// Noite — the same library at dusk.
-  static const dark = AppColors(
-    bg0: Color(0xFF1B2029),
-    bg1: Color(0xFF232A36),
-    bg2: Color(0xFF2B3341),
-    bg3: Color(0xFF38424F),
-    scrim: Color(0x94080A0E),
-    ink: Color(0xFFEDE6D6),
-    inkSoft: Color(0xB3EDE6D6),
-    inkFaint: Color(0x75EDE6D6),
-    textOnAccent: Color(0xFF1B140C),
-    line: Color(0x1FEDE6D6),
-    lineStrong: Color(0x38EDE6D6),
-    moss: Color(0xFF7FA277),
-    mossDeep: Color(0xFF5C7A54),
-    terracotta: Color(0xFFD08653),
-    terracottaDeep: Color(0xFFBE6A3E),
-    wine: Color(0xFFB4696C),
-    plum: Color(0xFF9576A0),
-    deepBlue: Color(0xFF7C93B5),
-    butter: Color(0xFFE8C06B),
-    sand: Color(0xFF8A6C44),
-    wood: Color(0xFF4A3320),
-    rose: Color(0xFFC99A8E),
+  static final dark = AppColors(
+    bg0: const Color(0xFF17151D),
+    bg1: const Color(0xFF211C2B),
+    bg2: const Color(0xFF2A2438),
+    bg3: const Color(0xFF382F47),
+    scrim: const Color(0xFF17151D).withOpacity(0.82),
+    ink: const Color(0xFFEDE6D6),
+    inkSoft: const Color(0xFFEDE6D6).withOpacity(0.72),
+    inkFaint: const Color(0xFFEDE6D6).withOpacity(0.44),
+    textOnAccent: const Color(0xFF17151D),
+    line: const Color(0xFFEDE6D6).withOpacity(0.10),
+    lineStrong: const Color(0xFFEDE6D6).withOpacity(0.22),
+    moss: const Color(0xFF7FA277),
+    mossDeep: const Color(0xFF5C7A54),
+    terracotta: const Color(0xFFD08653),
+    terracottaDeep: const Color(0xFFBE6A3E),
+    wine: const Color(0xFFB4696C),
+    plum: const Color(0xFF9576A0),
+    deepBlue: const Color(0xFF7C93B5),
+    butter: const Color(0xFFE8C06B),
+    sand: const Color(0xFF8A6C44),
+    wood: const Color(0xFF4A3320),
+    woodMid: const Color(0xFF6B4C30),
+    rose: const Color(0xFFC99A8E),
+    skyNight: const Color(0xFF1A2040),
   );
 
   @override
@@ -132,7 +132,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? butter,
     Color? sand,
     Color? wood,
+    Color? woodMid,
     Color? rose,
+    Color? skyNight,
   }) {
     return AppColors(
       bg0: bg0 ?? this.bg0,
@@ -156,7 +158,9 @@ class AppColors extends ThemeExtension<AppColors> {
       butter: butter ?? this.butter,
       sand: sand ?? this.sand,
       wood: wood ?? this.wood,
+      woodMid: woodMid ?? this.woodMid,
       rose: rose ?? this.rose,
+      skyNight: skyNight ?? this.skyNight,
     );
   }
 
@@ -185,7 +189,9 @@ class AppColors extends ThemeExtension<AppColors> {
       butter: Color.lerp(butter, other.butter, t)!,
       sand: Color.lerp(sand, other.sand, t)!,
       wood: Color.lerp(wood, other.wood, t)!,
+      woodMid: Color.lerp(woodMid, other.woodMid, t)!,
       rose: Color.lerp(rose, other.rose, t)!,
+      skyNight: Color.lerp(skyNight, other.skyNight, t)!,
     );
   }
 }

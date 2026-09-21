@@ -4,9 +4,6 @@ import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Builds the light and dark [ThemeData] for the app from the [AppColors]
-/// design tokens. Widgets should read colors via `context.colors` (see
-/// app_colors.dart) rather than hardcoding a [Color].
 class AppTheme {
   AppTheme._();
 
@@ -32,7 +29,7 @@ class AppTheme {
     );
 
     final textTheme = AppTypography.textTheme(colors.ink);
-    final borderRadius = BorderRadius.circular(AppRadius.sm);
+    final borderRadius = BorderRadius.circular(AppRadius.md);
 
     return ThemeData(
       useMaterial3: true,
@@ -57,30 +54,28 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: BorderSide(color: colors.line, width: 1.5),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: colors.line, width: 1.0),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colors.bg1,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(color: colors.lineStrong, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(color: colors.lineStrong, width: 1.0),
         ),
         titleTextStyle: textTheme.headlineSmall,
-        contentTextStyle: textTheme.bodyMedium?.copyWith(
-          color: colors.inkSoft,
-        ),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: colors.inkSoft),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: colors.bg1,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
+            top: Radius.circular(AppRadius.xl),
           ),
-          side: BorderSide(color: colors.lineStrong, width: 2),
+          side: BorderSide(color: colors.lineStrong, width: 1.0),
         ),
       ),
       drawerTheme: DrawerThemeData(
@@ -88,12 +83,12 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: colors.bg1,
+        backgroundColor: colors.bg2,
         contentTextStyle: textTheme.bodyMedium,
-        actionTextColor: colors.terracottaDeep,
+        actionTextColor: colors.terracotta,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          side: BorderSide(color: colors.lineStrong, width: 2),
+          side: BorderSide(color: colors.lineStrong, width: 1.0),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -106,35 +101,37 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
-            vertical: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
-          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
           textStyle: textTheme.labelLarge,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colors.ink,
-          side: BorderSide(color: colors.lineStrong, width: 1.5),
+          side: BorderSide(color: colors.lineStrong, width: 1.0),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
-            vertical: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
-          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
           textStyle: textTheme.labelLarge,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: colors.terracottaDeep,
+          foregroundColor: colors.terracotta,
           textStyle: textTheme.labelLarge,
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          backgroundColor: colors.bg1,
-          side: BorderSide(color: colors.line, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: borderRadius),
+          backgroundColor: Colors.transparent,
           foregroundColor: colors.ink,
         ),
       ),
@@ -143,8 +140,7 @@ class AppTheme {
         foregroundColor: colors.textOnAccent,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: BorderSide(color: colors.terracottaDeep, width: 2),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -156,21 +152,21 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: borderRadius,
-          borderSide: BorderSide(color: colors.line, width: 1.5),
+          borderSide: BorderSide(color: colors.line, width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: borderRadius,
-          borderSide: BorderSide(color: colors.line, width: 1.5),
+          borderSide: BorderSide(color: colors.line, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: borderRadius,
-          borderSide: BorderSide(color: colors.moss, width: 1.5),
+          borderSide: BorderSide(color: colors.terracotta, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: borderRadius,
-          borderSide: BorderSide(color: colors.wine, width: 1.5),
+          borderSide: BorderSide(color: colors.wine, width: 1.0),
         ),
-        labelStyle: textTheme.labelSmall?.copyWith(color: colors.inkFaint),
+        labelStyle: textTheme.bodyMedium?.copyWith(color: colors.inkSoft),
         hintStyle: textTheme.bodyMedium?.copyWith(color: colors.inkFaint),
       ),
       listTileTheme: ListTileThemeData(
@@ -179,7 +175,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: colors.bg1,
-        side: BorderSide(color: colors.line, width: 1.5),
+        side: BorderSide(color: colors.line, width: 1.0),
         labelStyle: textTheme.labelSmall,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -191,11 +187,6 @@ class AppTheme {
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colors.terracotta,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colors.bg1,
-        indicatorColor: colors.bg3,
-        surfaceTintColor: Colors.transparent,
       ),
     );
   }

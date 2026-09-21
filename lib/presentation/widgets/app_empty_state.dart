@@ -3,13 +3,12 @@ import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
+import 'primary_button.dart';
+import 'secondary_button.dart';
 
-/// The library's recurring empty/error/status illustration: a tinted icon
-/// badge, a headline, a short explanation, and an optional primary action.
-/// Used for empty collections, network errors, and scan/consult outcomes so
-/// every "nothing here yet" moment in the app reads the same way.
 class AppEmptyState extends StatelessWidget {
-  final List<List<dynamic>> icon;
+  final dynamic icon;
   final Color iconColor;
   final String title;
   final String message;
@@ -35,42 +34,69 @@ class AppEmptyState extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: colors.bg2,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: iconColor, width: 2),
-          ),
-          child: Center(
-            child: HugeIcon(icon: icon, color: iconColor, size: 28),
-          ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: icon is IconData
+                    ? Icon(icon as IconData, color: iconColor, size: 36)
+                    : HugeIcon(
+                        icon: icon as List<List<dynamic>>,
+                        color: iconColor,
+                        size: 36,
+                      ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              title,
+              style: AppTypography.display(
+                color: colors.ink,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colors.inkSoft,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (actionLabel != null) ...[
+              const SizedBox(height: AppSpacing.xxl),
+              PrimaryButton(
+                label: actionLabel!,
+                onPressed: onAction,
+                fullWidth: true,
+              ),
+            ],
+            if (secondaryLabel != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              SecondaryButton(
+                label: secondaryLabel!,
+                onPressed: onSecondary,
+                fullWidth: true,
+                variant: SecondaryButtonVariant.outline,
+              ),
+            ],
+          ],
         ),
-        const SizedBox(height: AppSpacing.lg),
-        Text(
-          title,
-          style: textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          message,
-          style: textTheme.bodyMedium?.copyWith(color: colors.inkSoft),
-          textAlign: TextAlign.center,
-        ),
-        if (actionLabel != null) ...[
-          const SizedBox(height: AppSpacing.xl),
-          ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
-        ],
-        if (secondaryLabel != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          TextButton(onPressed: onSecondary, child: Text(secondaryLabel!)),
-        ],
-      ],
+      ),
     );
   }
 }

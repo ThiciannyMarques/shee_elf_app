@@ -1,65 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_icons.dart';
-import '../../core/theme/app_spacing.dart';
 
-/// Picks an icon + accent color for a location from its name, so "Quarto",
-/// "Sala", "Escritório", "Caixa" etc. each get a distinct, recognizable badge
-/// without requiring a dedicated "type" field on [Location].
-class LocationLook {
-  final List<List<dynamic>> icon;
-  final Color Function(AppColors colors) color;
-
-  const LocationLook(this.icon, this.color);
-
-  static LocationLook forName(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('quarto') || n.contains('bed')) {
-      return LocationLook(AppIcons.bed, (c) => c.wood);
-    }
-    if (n.contains('escritório') ||
-        n.contains('escritorio') ||
-        n.contains('estúdio') ||
-        n.contains('estudio') ||
-        n.contains('desk')) {
-      return LocationLook(AppIcons.desk, (c) => c.mossDeep);
-    }
-    if (n.contains('caixa') || n.contains('box')) {
-      return LocationLook(AppIcons.box, (c) => c.terracottaDeep);
-    }
-    if (n.contains('emprestad') || n.contains('empréstimo')) {
-      return LocationLook(AppIcons.borrowed, (c) => c.deepBlue);
-    }
-    return LocationLook(AppIcons.location, (c) => c.plum);
-  }
-}
-
-/// A small square badge — icon in a colored outline — matching the mockup's
-/// "placa pendurada" (hung sign) treatment for locations.
 class LocationBadge extends StatelessWidget {
   final String name;
-  final double size;
+  final int bookCount;
+  final VoidCallback? onTap;
 
-  const LocationBadge({super.key, required this.name, this.size = 50});
+  const LocationBadge({
+    Key? key,
+    required this.name,
+    required this.bookCount,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
-    final look = LocationLook.forName(name);
-    final accent = look.color(colors);
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: colors.bg2,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: accent, width: 2),
-      ),
-      child: Center(
-        child: HugeIcon(icon: look.icon, color: accent, size: size * 0.46),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        constraints: const BoxConstraints(minHeight: 52),
+        decoration: BoxDecoration(
+          color: colors.bg1,
+          border: Border.all(color: colors.woodMid),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.vpn_key_outlined, size: 16, color: colors.terracotta),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontFamily: 'Fraunces',
+                  fontSize: 15,
+                  color: colors.ink,
+                ),
+              ),
+            ),
+            Text(
+              '$bookCount livros',
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 12,
+                color: colors.inkFaint,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

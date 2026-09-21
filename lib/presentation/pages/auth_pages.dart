@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/app_state.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/library_repository.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/library_controller.dart';
 import '../navigation/fantasy_page_route.dart';
+import '../widgets/app_text_input.dart';
 import '../widgets/ember_dots_loader.dart';
+import '../widgets/primary_button.dart';
 import '../widgets/responsive_scene.dart';
 import '../widgets/scene_image.dart';
 import '../widgets/splash_motion_overlay.dart';
@@ -27,7 +31,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    Future.delayed(const Duration(milliseconds: 1500), _checkAuth);
   }
 
   Future<void> _checkAuth() async {
@@ -39,49 +43,39 @@ class _SplashPageState extends State<SplashPage> {
       final user = (_authController.authState as StateSuccess<User>).data;
       getIt<LibraryRepository>().setSession(user.email);
       await _libraryController.initializeApp();
-      if (mounted)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
+      }
     } else {
       Navigator.pushReplacement(
         context,
-        FantasyPageRoute(builder: (_) => const LoginPage()),
+        FantasyPageRoute(builder: (_) => const AuthPage()),
       );
     }
   }
 
-  // The art's own canvas size (assets/splash_dark.svg viewBox="0 0 768
-  // 1376") — the scene always fills the screen's full height at this
-  // aspect ratio, so the logo (top) and loading (bottom) are never
-  // cropped; only the sides crop on unusually shaped screens. Update these
-  // if the art changes.
   static const _sceneWidth = 768.0;
   static const _sceneHeight = 1376.0;
 
   @override
   Widget build(BuildContext context) {
-    // The art (assets/splash_dark.svg) already carries the "She Elf" title
-    // and tagline lettering — no text overlay needed on top of it. The
-    // motion overlay only makes sense once that art is actually present,
-    // which today means dark mode; extend this once a light-mode scene
-    // exists too.
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF17151D),
       body: ResponsiveScene(
         referenceWidth: _sceneWidth,
         referenceHeight: _sceneHeight,
-        backgroundColor: isDark ? colors.deepBlue : colors.bg2,
+        backgroundColor: const Color(0xFF17151D),
         child: Stack(
           fit: StackFit.expand,
           children: [
             const SceneImage(sceneKey: 'splash'),
             if (isDark) const SplashMotionOverlay(),
-            // Just three small embers pulsing near the lantern — no card,
-            // no border, nothing that reads as a UI box sitting on the art.
             const Align(
               alignment: Alignment(0, 0.97),
               child: Padding(
@@ -96,135 +90,19 @@ class _SplashPageState extends State<SplashPage> {
   }
 }
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+enum AuthMode { login, register }
+
+class AuthPage extends StatefulWidget {
+  const AuthPage({super.key});
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<AuthPage> createState() => _AuthPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _AuthPageState extends State<AuthPage> {
   final _authController = getIt<AuthController>();
   final _libraryController = getIt<LibraryController>();
 
-  final _emailCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _authController.addListener(_updateState);
-  }
-
-  void _updateState() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _authController.removeListener(_updateState);
-    _emailCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
-  }
-
-  void _doLogin() async {
-    final success = await _authController.login(
-      _emailCtrl.text.trim(),
-      _passCtrl.text,
-    );
-    if (success && mounted) {
-      getIt<LibraryRepository>().setSession(_emailCtrl.text.trim());
-      await _libraryController.initializeApp();
-      if (mounted)
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = _authController.authState;
-    final colors = context.colors;
-
-    return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 220, child: SceneImage(sceneKey: 'auth')),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Bem-vindo à sua Biblioteca',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _emailCtrl,
-                      decoration: const InputDecoration(labelText: 'E-mail'),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passCtrl,
-                      decoration: const InputDecoration(labelText: 'Senha'),
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 24),
-                    if (state is StateError<User>)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          state.message,
-                          style: TextStyle(color: colors.wine),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ElevatedButton(
-                      onPressed: state is StateLoading<User> ? null : _doLogin,
-                      child: state is StateLoading<User>
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.textOnAccent,
-                              ),
-                            )
-                          : const Text('Entrar'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        FantasyPageRoute(builder: (_) => const RegisterPage()),
-                      ),
-                      child: const Text('Não tem uma conta? Cadastre-se'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
-  @override
-  State<RegisterPage> createState() => _RegisterPageState();
-}
-
-class _RegisterPageState extends State<RegisterPage> {
-  final _authController = getIt<AuthController>();
+  AuthMode _mode = AuthMode.login;
 
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -249,18 +127,38 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _doRegister() async {
-    final success = await _authController.register(
-      _nameCtrl.text.trim(),
-      _emailCtrl.text.trim(),
-      _passCtrl.text,
-    );
-    if (success && mounted) {
-      getIt<LibraryRepository>().setSession(_emailCtrl.text.trim());
-      Navigator.pushReplacement(
-        context,
-        FantasyPageRoute(builder: (_) => const InitialCollectionPage()),
+  void _submit() async {
+    final isLogin = _mode == AuthMode.login;
+    bool success = false;
+
+    if (isLogin) {
+      success = await _authController.login(
+        _emailCtrl.text.trim(),
+        _passCtrl.text,
       );
+      if (success && mounted) {
+        getIt<LibraryRepository>().setSession(_emailCtrl.text.trim());
+        await _libraryController.initializeApp();
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
+      }
+    } else {
+      success = await _authController.register(
+        _nameCtrl.text.trim(),
+        _emailCtrl.text.trim(),
+        _passCtrl.text,
+      );
+      if (success && mounted) {
+        getIt<LibraryRepository>().setSession(_emailCtrl.text.trim());
+        Navigator.pushReplacement(
+          context,
+          FantasyPageRoute(builder: (_) => const InitialCollectionPage()),
+        );
+      }
     }
   }
 
@@ -268,66 +166,183 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     final state = _authController.authState;
     final colors = context.colors;
+    final isLogin = _mode == AuthMode.login;
+    final isLoading = state is StateLoading<User>;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova Conta')),
+      backgroundColor: colors.bg0,
       body: Column(
         children: [
-          const SizedBox(height: 150, child: SceneImage(sceneKey: 'auth')),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _nameCtrl,
-                      decoration: const InputDecoration(labelText: 'Nome'),
+          SizedBox(
+            height: 240,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.network(
+                  'https://images.unsplash.com/photo-1603745676022-d1b77e3cbce8?w=480&h=480&fit=crop&q=60',
+                  fit: BoxFit.cover,
+                  color: Colors.black.withOpacity(0.65),
+                  colorBlendMode: BlendMode.darken,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFF17151D).withOpacity(0.3),
+                        const Color(0xFF17151D).withOpacity(0.95),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _emailCtrl,
-                      decoration: const InputDecoration(labelText: 'E-mail'),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passCtrl,
-                      decoration: const InputDecoration(labelText: 'Senha'),
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 24),
-                    if (state is StateError<User>)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          state.message,
-                          style: TextStyle(color: colors.wine),
-                          textAlign: TextAlign.center,
+                  ),
+                ),
+                Positioned(
+                  bottom: 20,
+                  left: 0,
+                  right: 0,
+                  child: Column(
+                    children: [
+                      Icon(Icons.auto_awesome, color: colors.butter, size: 36),
+                      const SizedBox(height: 8),
+                      Text(
+                        'She Elf',
+                        style: AppTypography.display(
+                          color: const Color(0xFFEDE6D6),
+                          fontSize: 32,
                         ),
                       ),
-                    ElevatedButton(
-                      onPressed: state is StateLoading<User>
-                          ? null
-                          : _doRegister,
-                      child: state is StateLoading<User>
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colors.textOnAccent,
-                              ),
-                            )
-                          : const Text('Cadastrar e Continuar'),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'a biblioteca que vive em casa',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFFEDE6D6).withOpacity(0.55),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl,
+                vertical: AppSpacing.xl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: colors.bg2,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: colors.line),
+                    ),
+                    padding: const EdgeInsets.all(3),
+                    child: Row(
+                      children: [
+                        _buildTab('Entrar', AuthMode.login, colors),
+                        _buildTab('Criar conta', AuthMode.register, colors),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  if (!isLogin) ...[
+                    AppTextInput(
+                      label: 'Nome',
+                      hintText: 'Seu nome',
+                      controller: _nameCtrl,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  AppTextInput(
+                    label: 'E-mail',
+                    hintText: 'seu@email.com',
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextInput(
+                    label: 'Senha',
+                    hintText: '••••••••',
+                    controller: _passCtrl,
+                    obscureText: true,
+                    errorText: state is StateError<User> ? state.message : null,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+
+                  PrimaryButton(
+                    label: isLoading
+                        ? 'Aguarde…'
+                        : (isLogin ? 'Entrar na biblioteca' : 'Criar conta'),
+                    onPressed: isLoading ? null : _submit,
+                    fullWidth: true,
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+
+                  Divider(color: colors.line, height: 1),
+                  const SizedBox(height: AppSpacing.lg),
+                  Center(
+                    child: Text(
+                      'DESENVOLVIMENTO',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.inkFaint,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextButton(
+                    onPressed: () => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomePage()),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.inkSoft,
+                      side: BorderSide(color: colors.lineStrong),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      minimumSize: const Size(double.infinity, 44),
+                    ),
+                    child: const Text('Entrar sem autenticação →'),
+                  ),
+                ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String title, AuthMode tabMode, AppColors colors) {
+    final isActive = _mode == tabMode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _mode = tabMode);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isActive ? colors.bg1 : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: isActive ? colors.ink : colors.inkFaint,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -356,15 +371,17 @@ class _InitialCollectionPageState extends State<InitialCollectionPage> {
 
     try {
       await _libraryController.createNewCollection(_nameCtrl.text.trim());
-      if (mounted)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -372,7 +389,13 @@ class _InitialCollectionPageState extends State<InitialCollectionPage> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Configuração Inicial'),
+        backgroundColor: colors.bg0,
+      ),
+      backgroundColor: colors.bg0,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -390,34 +413,27 @@ class _InitialCollectionPageState extends State<InitialCollectionPage> {
               const SizedBox(height: 24),
               Text(
                 'Quase lá!',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: AppTypography.display(color: colors.ink, fontSize: 24),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Dê um nome para a sua primeira coleção/biblioteca.',
-                style: TextStyle(color: colors.inkSoft),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: colors.inkSoft),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              TextField(
+              AppTextInput(
+                label: 'Nome da Coleção',
+                hintText: 'Ex: Estante Mágica',
                 controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nome da Coleção'),
-                textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              PrimaryButton(
+                label: _isLoading ? 'Aguarde...' : 'Criar e Começar',
                 onPressed: _isLoading ? null : _createAndGoHome,
-                child: _isLoading
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colors.textOnAccent,
-                        ),
-                      )
-                    : const Text('Criar e Começar'),
+                fullWidth: true,
               ),
             ],
           ),
